@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
+
 const PopUp = ({ isPopUpVisible, setPopUpVisible, onCreated }) => {
   const [ roomName, setRoomName ] = useState("新しいルーム");
 
@@ -9,7 +11,7 @@ const PopUp = ({ isPopUpVisible, setPopUpVisible, onCreated }) => {
 
   const createRoom = async () => {
     try {
-        const res = await fetch("http://localhost:3000/create_room", {
+        const res = await fetch(`${API_URL}/create_room`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
