@@ -1,16 +1,23 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import { io } from "socket.io-client"
-const socket = io("http://localhost:3000");
 
 import Pager from './components/Pager';
 import PopUp from './components/Popup';
 
 function App() {
+  const [socket, setSocket] = useState(null);
+  useEffect(() => {
+    const s = io("http://localhost:3000");
+    setSocket(s);
+
+    return () => s.disconnect();
+  }, []);
+
   const [ page, setPage ] = useState(1);
   const [ totalPages, setTotalPages ] = useState(1);
   const [ rooms, setRooms ] = useState([]);
-  const [ myName, setMyName ] = useState("Guest");
+  const [ myName, setMyName ] = useState(localStorage.getItem("name") || "Guest");
 
   const [ selected, setSelected ] = useState(null);
   const [ messages, setMessages ] = useState([]);
@@ -35,35 +42,52 @@ function App() {
 
 
   useEffect(() => {
-    socket.on("message", (data) => {
-      setMessages((prev) => [data, ...prev]);
-    });
+    if(!socket) return;
+    const handler = (data) => {
+      setMessages((prev) => {
+        if (data.roomId !== selected?.roomId) return prev;
+        return [data, ...prev];
+      });
+    };
 
-    return () => {
-      socket.off("message");
-    }
-  }, []);
+    socket.on("message", handler);
+    return () => socket.off("message", handler);
+  }, [selected]);
 
   useEffect(() => {
-    if(selected) {
-      socket.emit("join_room", {
-        roomId: selected?.roomId,
+    if(!myName) return;
+    localStorage.setItem("name", myName);
+  }, [myName])
+
+  useEffect(() => {
+    if(!socket) return;
+    if(!selected) return;
+    setMessages([]);
+    socket.emit("join_room", {
+      roomId: selected?.roomId,
+      username: myName
+    });
+    (async () => {
+      try {
+        const res = await fetch(`http://localhost:3000/messages/${selected.roomId}`);
+        if(!res.ok) throw new Error("通信エラー");
+        const data = await res.json();
+        setMessages(data.messages);
+      } catch (error) {
+        console.log(error);
+      }
+    })();
+
+    return () => {
+      socket.emit("leave_room", {
+        roomId: selected.roomId,
         username: myName
       });
-      (async () => {
-        try {
-          const res = await fetch(`http://localhost:3000/messages/${selected.roomId}`);
-          if(!res.ok) throw new Error("通信エラー");
-          const data = await res.json();
-          setMessages(data.messages);
-        } catch (error) {
-          console.log(error);
-        }
-      })();
     }
   }, [selected]);
 
   function sendMessage() {
+    if(!socket) return;
     if(!selected || input.trim() === "") return;
     const payload = {
       roomId: selected.roomId,
@@ -126,12 +150,18 @@ function App() {
               {messages.length > 0 ? (
                 <>
                   {messages.map((message, index) => (
-                    <div key={index} className="mb-1 p-2 bg-white rounded shadow">
-                      <span className='text-lg'>{message.username}</span> | <small>{new Date(message.post_at).toLocaleString()}</small>
-                      <hr />
-                      <br />
-                      {message.message}
-                    </div>
+                    message.system == 1 ? (
+                      <div key={index} className='text-gray-800'>
+                        {message.message}
+                      </div>
+                    ) : (
+                      <div key={index} className="mb-1 p-2 bg-white rounded shadow">
+                        <span className='text-lg'>{message.username}</span> | <small>{new Date(message.post_at).toLocaleString()}</small>
+                        <hr />
+                        <br />
+                        {message.message}
+                      </div>
+                    )
                   ))}
                 </>
               ) : (
