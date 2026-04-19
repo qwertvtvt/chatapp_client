@@ -103,7 +103,7 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-400">
+    <div className="flex h-[100dvh] bg-gray-400">
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
