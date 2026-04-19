@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 
-const PopUp = ({ onCreated }) => {
-  const [isPopUpVisible, setPopUpVisible] = useState(false);
-
+const PopUp = ({ isPopUpVisible, setPopUpVisible, onCreated }) => {
   const [ roomName, setRoomName ] = useState("新しいルーム");
 
   const togglePopUp = () => {
@@ -31,14 +29,8 @@ const PopUp = ({ onCreated }) => {
 
   return (
     <div>
-      <button
-        className="inline-flex h-9 items-center justify-center rounded-md bg-blue-500 px-3 font-medium text-neutral-50 hover:bg-blue-800 cursor-pointer"
-        onClick={togglePopUp}>
-          ルーム作成
-      </button>
-
       {isPopUpVisible && (
-        <div className="PopUp">
+        <div className="PopUp z-100">
           <label>ルーム名</label><br />
           <input
             type="text"

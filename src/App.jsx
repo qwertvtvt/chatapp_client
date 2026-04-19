@@ -5,10 +5,12 @@ import { io } from "socket.io-client"
 import Pager from './components/Pager';
 import PopUp from './components/Popup';
 
+const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
+
 function App() {
   const [socket, setSocket] = useState(null);
   useEffect(() => {
-    const s = io("http://localhost:3000");
+    const s = io(API_URL);
     setSocket(s);
 
     return () => s.disconnect();
@@ -17,6 +19,8 @@ function App() {
   const [ page, setPage ] = useState(1);
   const [ totalPages, setTotalPages ] = useState(1);
   const [ rooms, setRooms ] = useState([]);
+  const [ isOpen, setIsOpen ] = useState(false);
+  const [ isPopUpVisible, setPopUpVisible ] = useState(false);
   const [ myName, setMyName ] = useState(localStorage.getItem("name") || "Guest");
 
   const [ selected, setSelected ] = useState(null);
@@ -26,7 +30,7 @@ function App() {
 
   async function getRooms() {
     try {
-      const res = await fetch(`http://localhost:3000/rooms?page=${page}`);
+      const res = await fetch(`${API_URL}/rooms?page=${page}`);
       if(!res.ok) throw new Error("通信エラー");
       const data = await res.json();
       setRooms(data.rooms);
@@ -69,7 +73,7 @@ function App() {
     });
     (async () => {
       try {
-        const res = await fetch(`http://localhost:3000/messages/${selected.roomId}`);
+        const res = await fetch(`${API_URL}/messages/${selected.roomId}`);
         if(!res.ok) throw new Error("通信エラー");
         const data = await res.json();
         setMessages(data.messages);
@@ -100,12 +104,34 @@ function App() {
 
   return (
     <div className="flex h-screen bg-gray-400">
-      <div className="w-1/3 bg-gray-100 overflow-y-auto" style={{ margin: 20, padding: 10 }}>
-        <h1 className='text-3xl'>Rooms</h1>
-        <br />
-        <PopUp
-          onCreated={getRooms}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsOpen(false)}
         />
+      )}
+
+      <PopUp
+        isPopUpVisible={isPopUpVisible}
+        setPopUpVisible={setPopUpVisible}
+        onCreated={getRooms}
+      />
+
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-3/4 max-w-sm bg-gray-100 p-4 transition-transform duration-300 ease-in-out transform
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        md:relative md:translate-x-0 md:w-1/3 md:m-[20px] md:p-[10px] overflow-y-auto
+      `}>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className='text-3xl'>Rooms</h1>
+          <button onClick={() => setIsOpen(false)} className="text-2xl p-2 md:hidden">✕</button>
+        </div>
+        <br />
+        <button
+          className="inline-flex h-9 items-center justify-center rounded-md bg-blue-500 px-3 font-medium text-neutral-50 hover:bg-blue-800 cursor-pointer"
+          onClick={() => setPopUpVisible(true)}>
+            ルーム作成
+        </button><br />
         <br />
         <hr />
         <br />
@@ -139,11 +165,19 @@ function App() {
           onPageChange={setPage}
         />
       </div>
-      <div className="w-2/3 bg-gray-100 overflow-y-auto flex-col" style={{ margin: 20, marginLeft: 0, padding: 10 }}>
-        <div className='h-9/10 overflow-auto'>
+      <div className="flex-1 w-2/3 bg-gray-100 overflow-y-auto flex-col p-2 md:m-[20px] md:ml-[0px] md:p-[10px]">
+        <div className={`h-9/10 ${selected ? "overflow-auto" : "overflow-hidden"}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <button
+              onClick={() => setIsOpen(true)}
+              className="md:hidden p-2 rounded hover:bg-gray-200"
+            >
+              ☰
+            </button>
+            {selected && <h1 className="text-xl">{selected.roomname}</h1>}
+          </div>
           {selected ? (
             <>
-              <h1 className='text-2xl'>{selected.roomname}</h1>
               <br />
               <hr />
               <br />
@@ -169,9 +203,29 @@ function App() {
               )}
             </>
           ) : (
-            <>ルームを選択</>
+            <div className="flex flex-col items-center justify-center h-full text-center text-gray-600">
+    
+              <div className="text-5xl mb-2">💬</div>
+
+              <h1 className="text-2xl font-semibold mb-2">
+                Chat App!
+              </h1>
+
+              <p className="mb-4">
+                ルームを選択して会話を始めよう
+              </p>
+
+              <button
+                onClick={() => setIsOpen(true)}
+                className="md:hidden px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              >
+                ルーム一覧を開く
+              </button>
+
+            </div>
           )}
         </div>
+
         <div className="h-1/10 flex items-center gap-2 pt-2">
           {selected ? (
             <>
