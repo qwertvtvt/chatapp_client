@@ -146,7 +146,7 @@ function App() {
         <hr />
         <br />
         {rooms.length > 0 ? rooms.map((room, index) => (
-          <div key={index} onClick={(e) => setSelected(room)} className="mb-1 p-2 bg-white rounded shadow cursor-pointer hover:bg-gray-100 flex justify-between items-center">
+          <div key={index} onClick={(e) => {setSelected(room); setIsOpen(false)}} className="mb-1 p-2 bg-white rounded shadow cursor-pointer hover:bg-gray-100 flex justify-between items-center">
             <span className="truncate">
               {room.roomname}
             </span>
