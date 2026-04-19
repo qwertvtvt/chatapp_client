@@ -44,6 +44,15 @@ function App() {
     getRooms();
   }, [page]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      getRooms();
+    }, 10 * 1000);
+
+    return () => {
+      clearInterval(interval);
+    }
+  }, []);
 
   useEffect(() => {
     if(!socket) return;
