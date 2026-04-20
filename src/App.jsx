@@ -47,7 +47,7 @@ function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       getRooms();
-    }, 10 * 1000);
+    }, 5 * 1000);
 
     return () => {
       clearInterval(interval);
@@ -154,13 +154,13 @@ function App() {
         <br />
         <hr />
         <br />
-        {rooms.length > 0 ? rooms.map((room, index) => (
-          <div key={index} onClick={(e) => {setSelected(room); setIsOpen(false)}} className="mb-1 p-2 bg-white rounded shadow cursor-pointer hover:bg-gray-100 flex justify-between items-center">
+        {rooms.length > 0 ? rooms.map((room) => (
+          <div key={room.roomId} onClick={(e) => {setSelected(room); setIsOpen(false)}} className={`mb-1 p-2 rounded shadow cursor-pointer hover:bg-gray-100 ${selected?.roomId === room.roomId ? "bg-gray-100" : "bg-white"} flex justify-between items-center`}>
             <span className="truncate">
               {room.roomname}
             </span>
             <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
-              <small>{new Date(room.created_at).toLocaleString()}</small>
+              <small>更新:{new Date(room.updated_at).toLocaleString()}</small>
             </span>
           </div>
         )) : (
