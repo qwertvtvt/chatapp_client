@@ -10,6 +10,7 @@ const PopUp = ({ isPopUpVisible, setPopUpVisible, onCreated }) => {
   };
 
   const createRoom = async () => {
+    if(!roomName.trim()) return;
     try {
         const res = await fetch(`${API_URL}/create_room`, {
             method: "POST",

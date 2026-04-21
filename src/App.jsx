@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import { io } from "socket.io-client"
 
@@ -15,6 +15,9 @@ function App() {
 
     return () => s.disconnect();
   }, []);
+
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   const [ page, setPage ] = useState(1);
   const [ totalPages, setTotalPages ] = useState(1);
@@ -110,6 +113,36 @@ function App() {
     socket.emit("send", payload);
     setInput("");
   }
+
+  useEffect(() => {
+    const touchStart = (e) => {
+      touchStartX.current = e.changedTouches[0].screenX;
+    }
+
+    const touchEnd = (e) => {
+      touchEndX.current = e.changedTouches[0].screenX;
+      handleGesture();
+    }
+
+    const handleGesture = () => {
+      const diff = touchEndX.current - touchStartX.current;
+
+      if(diff > 50) {
+        setIsOpen(true);
+      }
+      if(diff < -50) {
+        setIsOpen(false);
+      }
+    }
+
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  });
 
   return (
     <div className="flex h-[100dvh] bg-gray-400">
